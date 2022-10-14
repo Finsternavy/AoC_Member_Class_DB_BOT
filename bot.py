@@ -3,6 +3,7 @@ from email.mime import application
 import json
 from operator import contains
 from unicodedata import name
+from warnings import catch_warnings
 from wsgiref import headers
 import discord
 from discord import Intents
@@ -23,7 +24,16 @@ member_list = []
 async def send_message(message, user_message, is_private):
     
     try:
-        response = responses.handle_response(user_message, member_list, message.author.nick)
+        response = 'default'
+        # Check if user is trying to input a command in direct chat instead of in the guild chat
+        print(message.author.nick)
+        try:
+            if message.author.nick:
+                print(message.content)
+                response = responses.handle_response(user_message, member_list, message.author.nick)
+                
+        except Exception as e:
+            response = 'Commands do not work in private messages. Please input command in the guild server chat.'
         
         if response == 'author':
             await message.author.send(message.author.nick) if is_private else await message.channel.send(message.author.nick)
@@ -32,11 +42,12 @@ async def send_message(message, user_message, is_private):
         
     except Exception as e:
       print(e)
+      
 
 
 # add new members, removes members who have left the guild
-@client.event
 async def update_members(member_list):
+    print(member_list)
     url = api_root + '/api/update/members'
     response = requests.post(url, json=member_list)
     print(response.text)
@@ -61,9 +72,11 @@ def run_bot():
         
         # build list of user objects to update database with current users
         for member in guild.members:
-            new_member = {}
-            new_member['username'] = str(member.nick)
-            member_list.append(new_member)
+            if str(member) != 'AoC Guild Bot#1463':
+                print(member)
+                new_member = {}
+                new_member['username'] = str(member.nick)
+                member_list.append(new_member)
             
         # this features updates the database with new users and removes users who have left the guild
         await update_members(member_list)
