@@ -18,11 +18,12 @@ import asyncio
 load_dotenv()
 api_root = "http://127.0.0.1:5000"
 client = discord.Client(intents=Intents.all())
+member_list = []
 
 async def send_message(message, user_message, is_private):
     
     try:
-        response = responses.handle_response(user_message)
+        response = responses.handle_response(user_message, member_list, message.author.nick)
         
         if response == 'author':
             await message.author.send(message.author.nick) if is_private else await message.channel.send(message.author.nick)
@@ -33,16 +34,13 @@ async def send_message(message, user_message, is_private):
       print(e)
 
 
-# move all of the server data to its own app and call it via api
+# add new members, removes members who have left the guild
 @client.event
 async def update_members(member_list):
-    
-    payload = {}
     url = api_root + '/api/update/members'
     response = requests.post(url, json=member_list)
     print(response.text)
         
-    
 
 
 def run_bot():
@@ -53,18 +51,22 @@ def run_bot():
     @client.event
     async def on_ready():
         print(f'{client.user} is now running!')
+        
+        
         for guild in client.guilds:
             if guild.name == GUILD:
                 break
         
-        current_members = []
+        # current_members = []
         
+        # build list of user objects to update database with current users
         for member in guild.members:
             new_member = {}
             new_member['username'] = str(member.nick)
-            current_members.append(new_member)
+            member_list.append(new_member)
             
-        await update_members(current_members)
+        # this features updates the database with new users and removes users who have left the guild
+        await update_members(member_list)
             
         
     @client.event

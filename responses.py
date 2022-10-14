@@ -4,11 +4,12 @@ from discord import Intents
 from discord.ext import commands
 from aiohttp import request
 import json
+import requests
 
-def handle_response(message) -> str:
+def handle_response(message, member_list, author) -> str:
     client = discord.Client(intents=Intents.all())
-    root_api = 'https://discord.com/'
-    
+    api_root = "http://127.0.0.1:5000"
+    user = author
     p_message = message.lower()
     
     if p_message.startswith("_hello"):
@@ -33,8 +34,14 @@ def handle_response(message) -> str:
         
         return help_message
     
-    if p_message.startswith("_get_member"):
-        return 'author'
+    if p_message.startswith("_set_class "):
+        
+        user_data = {'username': str(user)}
+        user_class = message[11:]
+        user_data['class'] = str(user_class)
+        
+        response = requests.post(api_root + '/api/update/member', json=user_data)
+        return json.dumps(response.json())
     
             
         
