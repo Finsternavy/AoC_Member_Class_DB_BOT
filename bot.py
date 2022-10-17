@@ -1,11 +1,5 @@
-from email.headerregistry import ContentTypeHeader
-from email.mime import application
 import json
-from multiprocessing.connection import wait
 from operator import contains
-from unicodedata import name
-from warnings import catch_warnings
-from wsgiref import headers
 import discord
 from discord import Intents
 from discord.ext import commands
@@ -14,13 +8,15 @@ import requests
 import responses
 import os
 from dotenv import load_dotenv
-import aiohttp
+from datetime import datetime, time, timedelta
 import asyncio
 
 load_dotenv()
 api_root = "http://127.0.0.1:5000"
 client = discord.Client(intents=Intents.all())
 member_list = []
+send_list = []
+WHEN = time(23, 24, 0) # 11:20 PM
 
 async def send_message(message, user_message, is_private):
     
@@ -52,13 +48,13 @@ async def update_members(member_list):
     url = api_root + '/api/update/members'
     response = requests.post(url, json=member_list)
     print(response.text)
-        
+
 
 
 def run_bot():
     TOKEN = os.getenv("TOKEN")
     GUILD = os.getenv("GUILD")
-    
+    GEN_CHANNEL = os.getenv("GEN_CHANNEL")
     
     @client.event
     async def on_ready():
@@ -77,10 +73,15 @@ def run_bot():
                 print(member)
                 new_member = {}
                 new_member['username'] = str(member.nick)
+                send_list.append(member)
                 member_list.append(new_member)
             
         # this features updates the database with new users and removes users who have left the guild
         await update_members(member_list)
+        
+        # Reminds users to set their class when the bot comes online (Also available from command _remind)
+        channels = client.get_channel(int(GEN_CHANNEL))
+        await channels.send("Don't forget to set your class for Ashes of creation! Type '_set_class ' then the name of the class you want to play in AoC to set your class! Type '_help' for assistance.")
             
         
     @client.event

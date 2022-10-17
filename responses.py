@@ -22,18 +22,21 @@ def handle_response(message, member_list, author) -> str:
     
     if p_message.startswith('_help'):
         
-        help_message = ('The following commands are available to you:\n\n'
-            ' ? + command   :   Placing a ? in front of a command sends the response to you in a private message instead of posting it to the channel\n\n'
-            ' _timeout   :   Prevent bot from asking you to set your class on login for 1 week (You may still use the set command at any time)\n'
-            ' _set_class class   :   Set your class the the class you intend to play in Ashes of Creation\n'
+        help_message = (
+            'Example command:\n'
+            ' _find rogue   (This is an example of the _find class-name command below.)\n\n'
+            ' ? + command   :   Placing a ? in front of a command sends the response to you in a private message instead of posting it to the channel.  You can not execute commands in private chat.\n\n'
+            'The following commands are available to you:\n\n'
+            ' _set_class class   :   Set your class the the class you intend to play in Ashes of Creation. Example: "_set_class dreadnought"\n'
             ' _class username   :   shows you what class that user intends to / is playing\n'
             ' _tank   :   Shows a list of all users who play a tank role\n'
             ' _DPS   :   Shows a list of all users who play a DPS role\n'
-            ' _Support   :   Shows a list of all users who play a support role\n'
-            ' _Healer   :   Shows a list of all users who play as a healer (Cleric)\n'
-            ' _find_class class-name   :   Shows a list of all users who play a specific class\n'
-            ' _find_true_class class-name   :   Shows a list of all users whos primary class and augment are the same (Example: Tank / Tank)\n'
-            '_roll   :   Returns a random number between 1 and 100')
+            ' _support   :   Shows a list of all users who play a support role\n'
+            ' _healer   :   Shows a list of all users who play as a healer (Cleric)\n'
+            ' _find class-name   :   Shows a list of all users who play a specific primary class (8 archetypes)\n'
+            ' _find_true class-name   :   Shows a list of all users whos primary class and augment are the same (Example: Tank / Tank)\n'
+            ' _roll   :   Returns a random number between 1 and 100\n'
+            ' _remind   :   Remind your guild members to set their classes')
         
         return help_message
     
@@ -82,7 +85,8 @@ def handle_response(message, member_list, author) -> str:
         
         return return_string
         
-    if p_message.startswith('_tanks'):
+        
+    if p_message.startswith('_tank'):
         
         response = requests.get(api_root + "/api/guild/tanks")
         tanks = response.json()
@@ -93,3 +97,83 @@ def handle_response(message, member_list, author) -> str:
             return_string = return_string + f" {tank}\n"
         
         return return_string
+    
+    
+    if p_message.startswith('_dps') or p_message.startswith('_DPS') or p_message.startswith("_support"):
+        
+        response = requests.get(api_root + "/api/guild/dps-support")
+        
+        dps_support = response.json()
+        
+        return_string = 'DPS/Supports:\n'
+        
+        for member in dps_support:
+            return_string = return_string + f" {member}\n"
+            
+        return return_string
+    
+    
+    if p_message.startswith('_healer'):
+        
+        response = requests.get(api_root + '/api/guild/healers')
+        
+        healers = response.json()
+        
+        return_string = 'Healers:\n'
+        
+        for healer in healers:
+            return_string = return_string + f" {healer}\n"
+            
+        return return_string
+    
+    if p_message.startswith("_find "):
+        
+        search_class = str(message[6:]).lower()
+        print(search_class)
+        
+        classes = ['fighter', 'tank', 'rogue', 'ranger', 'mage', 'summoner', 'cleric', 'bard']
+        
+        if str(search_class).lower() not in classes:
+            return "Invalid class entered.  Please check your spelling and try again."
+        
+        response = requests.get(api_root + '/api/guild/get-class/' + search_class)
+        
+        players = response.json()
+        
+        return_string = f'{search_class.capitalize()}s:\n'
+        
+        if not players:
+            return_string = "No one in the guild plays that class.  :("
+            return return_string
+        
+        for player in players:
+            return_string = return_string + f' {player}\n'
+            
+        return return_string
+        
+    if p_message.startswith("_find_true "):
+        
+        search_class = str(message[11:]).lower()
+        
+        classes = ['fighter', 'tank', 'rogue', 'ranger', 'mage', 'summoner', 'cleric', 'bard']
+        
+        if str(search_class).lower() not in classes:
+            return "Invalid class entered.  Please check your spelling and try again."
+        
+        response = requests.get(api_root + '/api/guild/get-true-class/' + search_class)
+        
+        players = response.json()
+        
+        return_string = f'True {search_class.capitalize()}s:\n'
+        
+        if not players:
+            return_string = f"No one in the guild plays a true {search_class.capitalize()}.  :("
+            return return_string
+        
+        for player in players:
+            return_string = return_string + f' {player}\n'
+            
+        return return_string
+        
+    if p_message.startswith("_remind"):
+        return "Don't forget to set your class for Ashes of creation! Type '_set_class ' then the name of the class you want to play in AoC to set your class! Type '_help' for assistance."
