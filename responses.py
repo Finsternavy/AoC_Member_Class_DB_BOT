@@ -36,7 +36,8 @@ def handle_response(message, member_list, author) -> str:
             ' _find class-name   :   Shows a list of all users who play a specific primary class (8 archetypes)\n'
             ' _find_true class-name   :   Shows a list of all users whos primary class and augment are the same (Example: Tank / Tank)\n'
             ' _roll   :   Returns a random number between 1 and 100\n'
-            ' _remind   :   Remind your guild members to set their classes')
+            ' _remind   :   Remind your guild members to set their classes\n'
+            ' _class_breakdown   :   Displays a breakdown of the entired guilds class structure')
         
         return help_message
     
@@ -65,6 +66,8 @@ def handle_response(message, member_list, author) -> str:
             return json.dumps(response_string)
         
     if p_message.startswith('_class_breakdown'):
+        
+        # need to add stats for each archetype (Fighter, tanks, rogue, etc..)
         
         response = requests.get(api_root + '/api/guild/class-breakdown')
         guild_stats = response.json()
